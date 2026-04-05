@@ -1,5 +1,5 @@
 // js/api.js - 請確認內容完全一致
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxLmdK3aGW80Lvx9n0h-sp0Q_Q3ImcK8koJkblHdaZutobHGo-Q7CUt0kMX7jg7guCl/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxUMrsx-49kl31W6bpVi1bT2brT3Wm6sKCXQxLEHj52t9hqFW1iZrmZytsn1CQlCHDo/exec';
 
 class CramSchoolAPI {
   constructor() {
