@@ -1,5 +1,41 @@
 // js/api.js - 請確認內容完全一致
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxUMrsx-49kl31W6bpVi1bT2brT3Wm6sKCXQxLEHj52t9hqFW1iZrmZytsn1CQlCHDo/exec';
+const API_BASE_URL = // ========== 最簡化版本 Code.gs（確保 CORS 正確）==========
+
+function doPost(e) {
+  // 解析請求資料
+  const data = JSON.parse(e.postData.contents);
+  const action = data.action;
+  
+  // 登入邏輯
+  if (action === "login") {
+    const { userType, password } = data;
+    const passwords = { teacher: "110", admin: "0502", parent: "931" };
+    
+    if (passwords[userType] === password) {
+      const result = { success: true, message: "登入成功", userType: userType };
+      return ContentService
+        .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else {
+      const result = { success: false, message: "密碼錯誤" };
+      return ContentService
+        .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  // 預設回應
+  const result = { success: false, message: "未知的請求" };
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet() {
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, message: "API 運行中" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}';
 
 class CramSchoolAPI {
   constructor() {
