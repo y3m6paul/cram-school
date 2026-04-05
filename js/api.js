@@ -1,7 +1,7 @@
 // ========== JSONP 版本 api.js（解決 CORS 問題）==========
 
 // 請將此網址替換為您的 Apps Script 部署網址
-const API_BASE_URL = 'https://script.google.com/macros/s/您的部署ID/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxVG0I-55PzuNCZ94RXQ2KWk85FkwZw-jFgw0O97W8fvrObD05yTa6WaJGblOOX-KoA/exec';
 
 class CramSchoolAPI {
   constructor() {
