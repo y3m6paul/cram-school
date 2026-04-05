@@ -1,6 +1,6 @@
 // js/api.js - API 呼叫封裝
 // 請替換為您的 Apps Script 部署網址
-const API_BASE_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+const API_BASE_URL = https://script.google.com/macros/s/AKfycbxLmdK3aGW80Lvx9n0h-sp0Q_Q3ImcK8koJkblHdaZutobHGo-Q7CUt0kMX7jg7guCl/exec;
 
 class CramSchoolAPI {
   constructor() {
