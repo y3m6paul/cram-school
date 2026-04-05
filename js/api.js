@@ -1,102 +1,95 @@
-// js/api.js - 請確認內容完全一致
-const API_BASE_URL = // ========== 最簡化版本 Code.gs（確保 CORS 正確）==========
+// ========== JSONP 版本 api.js（解決 CORS 問題）==========
 
-function doPost(e) {
-  // 解析請求資料
-  const data = JSON.parse(e.postData.contents);
-  const action = data.action;
-  
-  // 登入邏輯
-  if (action === "login") {
-    const { userType, password } = data;
-    const passwords = { teacher: "110", admin: "0502", parent: "931" };
-    
-    if (passwords[userType] === password) {
-      const result = { success: true, message: "登入成功", userType: userType };
-      return ContentService
-        .createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-    } else {
-      const result = { success: false, message: "密碼錯誤" };
-      return ContentService
-        .createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  
-  // 預設回應
-  const result = { success: false, message: "未知的請求" };
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doGet() {
-  return ContentService
-    .createTextOutput(JSON.stringify({ success: true, message: "API 運行中" }))
-    .setMimeType(ContentService.MimeType.JSON);
-}';
+// 請將此網址替換為您的 Apps Script 部署網址
+const API_BASE_URL = 'https://script.google.com/macros/s/您的部署ID/exec';
 
 class CramSchoolAPI {
   constructor() {
     this.baseUrl = API_BASE_URL;
   }
 
-  // 通用 POST 請求
-  async post(action, data) {
-    try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action, ...data })
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('API Error:', error);
-      return { success: false, message: '網路連線錯誤' };
-    }
+  // JSONP 請求方法（解決 CORS）
+  jsonpRequest(params) {
+    return new Promise((resolve, reject) => {
+      // 建立唯一的 callback 名稱
+      const callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+      
+      // 建立 callback 函數
+      window[callbackName] = function(data) {
+        // 清理
+        delete window[callbackName];
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+        // 解析資料
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch(e) {}
+        }
+        resolve(data);
+      };
+      
+      // 建立請求 URL
+      const urlParams = new URLSearchParams(params);
+      urlParams.append('callback', callbackName);
+      const url = `${this.baseUrl}?${urlParams.toString()}`;
+      
+      // 建立 script 標籤
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = function() {
+        // 錯誤處理
+        delete window[callbackName];
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+        reject(new Error('網路連線錯誤'));
+      };
+      
+      // 發送請求
+      document.body.appendChild(script);
+      
+      // 超時處理（10秒）
+      setTimeout(() => {
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+          reject(new Error('請求超時'));
+        }
+      }, 10000);
+    });
   }
 
-  // 通用 GET 請求
-  async get(params) {
-    try {
-      const url = new URL(this.baseUrl);
-      Object.keys(params).forEach(key => {
-        url.searchParams.append(key, params[key]);
-      });
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        mode: 'cors'
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('API Error:', error);
-      return { success: false, message: '網路連線錯誤' };
-    }
-  }
-
-  // 登入
+  // 登入（使用 JSONP GET 請求）
   async login(userType, password) {
-    return this.post('login', { userType, password });
-  }
-
-  // 取得學生名單
-  async getStudents(className = '') {
-    return this.get({ action: 'getStudents', class: className });
-  }
-
-  // 取得班級列表
-  async getClassList() {
-    return this.get({ action: 'getClassList' });
+    return this.jsonpRequest({
+      action: 'login',
+      userType: userType,
+      password: password
+    });
   }
 
   // 健康檢查
   async healthCheck() {
-    return this.get({ action: 'health' });
+    return this.jsonpRequest({ action: 'health' });
+  }
+
+  // 取得班級列表
+  async getClassList() {
+    return this.jsonpRequest({ action: 'getClassList' });
+  }
+
+  // 取得學生名單
+  async getStudents(className = '') {
+    return this.jsonpRequest({ 
+      action: 'getStudents', 
+      class: className 
+    });
   }
 }
 
+// 建立全域實例
 const api = new CramSchoolAPI();
