@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>點名系統 - 補習班管理系統</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+      background: #f0f2f5;
+    }
+    
+    .navbar {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .navbar h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn-back {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .control-panel {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .form-group {
+      flex: 1;
+      min-width: 180px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .btn-primary {
+      background: #3498db;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #2980b9;
+    }
+    
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #219a52;
+    }
+    
+    .stats-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #3498db;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 15px;
+      overflow-x: auto;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    
+    th {
+      background: #3498db;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+    
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .status-select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      width: 100px;
+    }
+    
+    .submit-section {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    
+    @media (max-width: 768px) {
+      .control-panel {
+        flex-direction: column;
+      }
+      
+      .form-group {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h2><i class="fas fa-clipboard-check"></i> 點名系統</h2>
+    <button class="btn-back" onclick="goBack()">← 返回儀表板</button>
+  </div>
+  
+  <div class="container">
+    <div id="message" class="message"></div>
+    
+    <div class="control-panel">
+      <div class="form-group">
+        <label>選擇班級</label>
+        <select id="classSelect" class="form-control">
+          <option value="">請選擇班級</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>點名日期</label>
+        <input type="date" id="dateSelect" class="form-control">
+      </div>
+      <button class="btn btn-primary" onclick="loadStudents()">載入學生</button>
+    </div>
+    
+    <div id="statsPanel" class="stats-panel" style="display: none;">
+      <div class="stat-card">總人數：<span id="totalCount" class="stat-value">0</span></div>
+      <div class="stat-card">已到班：<span id="presentCount" class="stat-value">0</span></div>
+      <div class="stat-card">未到班：<span id="absentCount" class="stat-value">0</span></div>
+      <div class="stat-card">請假：<span id="leaveCount" class="stat-value">0</span></div>
+    </div>
+    
+    <div id="tableContainer" class="table-container" style="display: none;">
+      <table>
+        <thead>
+          <tr><th>學號</th><th>姓名</th><th>狀態</th><th>備註</th></tr>
+        </thead>
+        <tbody id="studentList"></tbody>
+      </table>
+    </div>
+    
+    <div id="submitSection" class="submit-section" style="display: none;">
+      <button class="btn btn-success" onclick="submitAttendance()">📤 提交點名記錄</button>
+    </div>
+  </div>
+  
+  <script src="js/api.js"></script>
+  <script>
+    let studentsData = [];
+    let selectedClass = '';
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const userType = urlParams.get('userType') || localStorage.getItem('userType') || 'teacher';
+    
+    async function loadClasses() {
+      const response = await api.get({ action: 'getClassList' });
+      if (response.success && response.classes) {
+        const select = document.getElementById('classSelect');
+        response.classes.forEach(cls => {
+          const option = document.createElement('option');
+          option.value = cls;
+          option.textContent = cls;
+          select.appendChild(option);
+        });
+      }
+    }
+    
+    async function loadStudents() {
+      selectedClass = document.getElementById('classSelect').value;
+      if (!selectedClass) {
+        showMessage('請選擇班級', 'error');
+        return;
+      }
+      
+      const response = await api.getStudents(selectedClass);
+      if (response.success && response.students) {
+        studentsData = response.students.map(s => ({ ...s, status: '未到班', note: '' }));
+        renderStudentList();
+        document.getElementById('statsPanel').style.display = 'grid';
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('submitSection').style.display = 'block';
+        updateStats();
+      } else {
+        showMessage('載入學生失敗', 'error');
+      }
+    }
+    
+    function renderStudentList() {
+      const tbody = document.getElementById('studentList');
+      tbody.innerHTML = '';
+      studentsData.forEach((student, idx) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerHTML = student.id;
+        row.insertCell(1).innerHTML = student.name;
+        row.insertCell(2).innerHTML = `<select class="status-select" data-idx="${idx}" onchange="updateStatus(${idx}, this.value)">
+          <option value="未到班">未到班</option>
+          <option value="已到班">已到班</option>
+          <option value="請假">請假</option>
+        </select>`;
+        row.insertCell(3).innerHTML = `<input type="text" placeholder="備註" data-idx="${idx}" onchange="updateNote(${idx}, this.value)">`;
+      });
+    }
+    
+    function updateStatus(idx, status) {
+      studentsData[idx].status = status;
+      updateStats();
+    }
+    
+    function updateNote(idx, note) {
+      studentsData[idx].note = note;
+    }
+    
+    function updateStats() {
+      const total = studentsData.length;
+      const present = studentsData.filter(s => s.status === '已到班').length;
+      const absent = studentsData.filter(s => s.status === '未到班').length;
+      const leave = studentsData.filter(s => s.status === '請假').length;
+      document.getElementById('totalCount').innerText = total;
+      document.getElementById('presentCount').innerText = present;
+      document.getElementById('absentCount').innerText = absent;
+      document.getElementById('leaveCount').innerText = leave;
+    }
+    
+    async function submitAttendance() {
+      const date = document.getElementById('dateSelect').value || new Date().toISOString().split('T')[0];
+      const records = studentsData.map(s => ({
+        date: date,
+        studentId: s.id,
+        studentName: s.name,
+        className: selectedClass,
+        status: s.status,
+        note: s.note
+      }));
+      
+      const response = await api.saveAttendance(records);
+      if (response.success) {
+        showMessage('點名記錄已儲存！', 'success');
+      } else {
+        showMessage('儲存失敗：' + response.message, 'error');
+      }
+    }
+    
+    function showMessage(msg, type) {
+      const msgDiv = document.getElementById('message');
+      msgDiv.textContent = msg;
+      msgDiv.className = 'message ' + type;
+      setTimeout(() => msgDiv.style.display = 'none', 3000);
+    }
+    
+    function goBack() {
+      window.location.href = `dashboard.html?userType=${userType}`;
+    }
+    
+    document.getElementById('dateSelect').value = new Date().toISOString().split('T')[0];
+    loadClasses();
+  </script>
+</body>
+</html>

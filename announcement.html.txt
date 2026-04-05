@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公告管理 - 補習班管理系統</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+    .navbar { background: linear-gradient(135deg, #2c3e50, #e67e22); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-back { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; background: white; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .tab.active { background: #e67e22; color: white; }
+    .tab-content { display: none; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .tab-content.active { display: block; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+    .form-control { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; }
+    textarea.form-control { min-height: 150px; resize: vertical; }
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: #e67e22; color: white; }
+    .announcement-card { border: 1px solid #eee; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+    .announcement-title { font-size: 18px; font-weight: bold; color: #e67e22; }
+    .announcement-meta { color: #666; font-size: 12px; margin: 10px 0; }
+    .message { padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; }
+    .message.success { background: #d4edda; color: #155724; display: block; }
+    .message.error { background: #f8d7da; color: #721c24; display: block; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h2><i class="fas fa-bullhorn"></i> 公告管理</h2>
+    <button class="btn-back" onclick="goBack()">← 返回</button>
+  </div>
+  <div class="container">
+    <div id="message" class="message"></div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('list')">公告列表</div>
+      <div class="tab" onclick="switchTab('add')">發布公告</div>
+    </div>
+    <div id="list-tab" class="tab-content active"><div id="announcementList">載入中...</div></div>
+    <div id="add-tab" class="tab-content">
+      <div class="form-group"><label>公告標題</label><input type="text" id="annTitle" class="form-control"></div>
+      <div class="form-group"><label>公告內容</label><textarea id="annContent" class="form-control"></textarea></div>
+      <div class="form-group"><label>公告類型</label><select id="annType" class="form-control"><option>一般公告</option><option>緊急通知</option><option>活動訊息</option></select></div>
+      <button class="btn btn-primary" onclick="submitAnnouncement()">發布公告</button>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const userType = urlParams.get('userType') || localStorage.getItem('userType') || 'teacher';
+    
+    async function loadAnnouncements() {
+      const response = await api.getAnnouncements();
+      const container = document.getElementById('announcementList');
+      if (response.success && response.announcements) {
+        if (response.announcements.length === 0) { container.innerHTML = '<p>暫無公告</p>'; return; }
+        container.innerHTML = response.announcements.map(a => `
+          <div class="announcement-card">
+            <div class="announcement-title">${a.title}</div>
+            <div class="announcement-meta">📅 ${a.publishDate?.split('T')[0] || ''} | 類型：${a.type || '一般公告'}</div>
+            <div>${a.content || ''}</div>
+          </div>
+        `).join('');
+      } else { container.innerHTML = '<p>載入失敗</p>'; }
+    }
+    
+    async function submitAnnouncement() {
+      const data = { title: document.getElementById('annTitle').value, content: document.getElementById('annContent').value, type: document.getElementById('annType').value };
+      if (!data.title || !data.content) { showMessage('請填寫標題和內容', 'error'); return; }
+      const response = await api.saveAnnouncement(data);
+      if (response.success) { showMessage('公告發布成功！', 'success'); document.getElementById('annTitle').value = ''; document.getElementById('annContent').value = ''; switchTab('list'); loadAnnouncements(); }
+      else { showMessage('發布失敗：' + response.message, 'error'); }
+    }
+    
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      if (tab === 'list') { document.querySelector('.tab:first-child').classList.add('active'); document.getElementById('list-tab').classList.add('active'); loadAnnouncements(); }
+      else { document.querySelector('.tab:last-child').classList.add('active'); document.getElementById('add-tab').classList.add('active'); }
+    }
+    
+    function showMessage(msg, type) { const msgDiv = document.getElementById('message'); msgDiv.textContent = msg; msgDiv.className = 'message ' + type; setTimeout(() => msgDiv.style.display = 'none', 3000); }
+    function goBack() { window.location.href = `dashboard.html?userType=${userType}`; }
+    loadAnnouncements();
+  </script>
+</body>
+</html>

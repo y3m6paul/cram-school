@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>補習班管理系統 - 登入</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 450px;
+    }
+    
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    .login-header {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    
+    .login-header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .login-body {
+      padding: 40px;
+    }
+    
+    .user-type-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .user-type-btn {
+      padding: 20px 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 15px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    
+    .user-type-btn i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .user-type-btn:hover {
+      border-color: #4CAF50;
+      transform: translateY(-3px);
+    }
+    
+    .user-type-btn.active {
+      border-color: #4CAF50;
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+      display: none;
+    }
+    
+    .form-group.active {
+      display: block;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    
+    .password-hint {
+      font-size: 13px;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(76, 175, 80, 0.4);
+    }
+    
+    .message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      display: none;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+      font-size: 12px;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+    
+    @media (max-width: 480px) {
+      .user-type-selector {
+        grid-template-columns: 1fr;
+      }
+      
+      .login-body {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>
+          <i class="fas fa-chalkboard-teacher"></i>
+          補習班管理系統
+        </h1>
+        <p>請選擇您的身份登入</p>
+      </div>
+      
+      <div class="login-body">
+        <div class="user-type-selector">
+          <div class="user-type-btn active" data-type="teacher" onclick="selectUserType('teacher')">
+            <i class="fas fa-chalkboard-teacher"></i>
+            老師登入
+          </div>
+          <div class="user-type-btn" data-type="admin" onclick="selectUserType('admin')">
+            <i class="fas fa-user-shield"></i>
+            管理員登入
+          </div>
+          <div class="user-type-btn" data-type="parent" onclick="selectUserType('parent')">
+            <i class="fas fa-user-friends"></i>
+            家長專區
+          </div>
+        </div>
+        
+        <div id="teacher-form" class="form-group active">
+          <input type="password" id="teacher-password" class="form-control" placeholder="老師密碼 (110)">
+          <div class="password-hint">預設密碼：110</div>
+        </div>
+        
+        <div id="admin-form" class="form-group">
+          <input type="password" id="admin-password" class="form-control" placeholder="管理員密碼 (0502)">
+          <div class="password-hint">預設密碼：0502</div>
+        </div>
+        
+        <div id="parent-form" class="form-group">
+          <input type="password" id="parent-password" class="form-control" placeholder="家長密碼 (931)">
+          <div class="password-hint">預設密碼：931</div>
+        </div>
+        
+        <button class="btn-login" onclick="login()" id="loginBtn">
+          <span id="loginText">登入系統</span>
+          <span id="loginLoading" class="loading" style="display:none;"></span>
+        </button>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="footer">
+          <p>© 2025 補習班管理系統</p>
+          <p>老師：110 | 管理員：0502 | 家長：931</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let selectedUserType = 'teacher';
+    
+    function selectUserType(userType) {
+      selectedUserType = userType;
+      
+      document.querySelectorAll('.user-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`.user-type-btn[data-type="${userType}"]`).classList.add('active');
+      
+      document.getElementById('teacher-form').classList.remove('active');
+      document.getElementById('admin-form').classList.remove('active');
+      document.getElementById('parent-form').classList.remove('active');
+      document.getElementById(`${userType}-form`).classList.add('active');
+      
+      document.getElementById('message').style.display = 'none';
+    }
+    
+    async function login() {
+      let password = '';
+      let redirectPage = '';
+      
+      if (selectedUserType === 'teacher') {
+        password = document.getElementById('teacher-password').value;
+        redirectPage = 'dashboard.html?userType=teacher';
+      } else if (selectedUserType === 'admin') {
+        password = document.getElementById('admin-password').value;
+        redirectPage = 'dashboard.html?userType=admin';
+      } else {
+        password = document.getElementById('parent-password').value;
+        redirectPage = 'parent-dashboard.html';
+      }
+      
+      if (!password) {
+        showMessage('請輸入密碼', 'error');
+        return;
+      }
+      
+      const loginBtn = document.getElementById('loginBtn');
+      const loginText = document.getElementById('loginText');
+      const loginLoading = document.getElementById('loginLoading');
+      
+      loginBtn.disabled = true;
+      loginText.style.display = 'none';
+      loginLoading.style.display = 'inline-block';
+      
+      const response = await api.login(selectedUserType, password);
+      
+      if (response.success) {
+        showMessage('登入成功！跳轉中...', 'success');
+        localStorage.setItem('userType', selectedUserType);
+        setTimeout(() => {
+          window.location.href = redirectPage;
+        }, 1500);
+      } else {
+        showMessage(response.message || '密碼錯誤', 'error');
+        loginBtn.disabled = false;
+        loginText.style.display = 'inline-block';
+        loginLoading.style.display = 'none';
+      }
+    }
+    
+    function showMessage(text, type) {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = 'message ' + type;
+      message.style.display = 'block';
+      
+      if (type === 'error') {
+        setTimeout(() => {
+          message.style.display = 'none';
+        }, 3000);
+      }
+    }
+    
+    document.getElementById('teacher-password').focus();
+  </script>
+</body>
+</html>
