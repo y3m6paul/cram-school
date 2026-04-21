@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生作業上傳</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; }
+    button { background: #4CAF50; color: white; font-weight: bold; cursor: pointer; }
+    .homework-item { border-left: 4px solid #4CAF50; padding: 15px; margin-bottom: 15px; background: #f9f9f9; border-radius: 8px; }
+    .homework-title { font-weight: bold; font-size: 18px; }
+    .status-submitted { color: #4CAF50; font-weight: bold; }
+    .status-not { color: #f44336; }
+    audio { width: 100%; margin-top: 10px; }
+    .submitted-file { margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 5px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>📖 作業上傳區</h2>
+    <button onclick="logout()">登出</button>
+  </div>
+  
+  <div class="card">
+    <h3>👤 選擇您的名字</h3>
+    <select id="studentSelect">
+      <option value="">請選擇</option>
+    </select>
+  </div>
+  
+  <div id="homeworkList">請先選擇姓名</div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let students = [];
+  let selectedStudent = '';
+  let homeworks = [];
+  
+  async function loadStudents() {
+    const res = await api.getStudents();
+    if (res.success) {
+      students = res.students;
+      const select = document.getElementById('studentSelect');
+      students.forEach(s => {
+        const option = document.createElement('option');
+        option.value = s.englishName;
+        option.textContent = `${s.englishName} (${s.chineseName}) - ${s.className}`;
+        select.appendChild(option);
+      });
+    }
+  }
+  
+  async function loadHomework() {
+    if (!selectedStudent) return;
+    const res = await api.getHomework();
+    if (res.success) {
+      homeworks = res.homeworks;
+      const container = document.getElementById('homeworkList');
+      
+      let html = '';
+      for (let hw of homeworks) {
+        const check = await api.checkSubmission(hw.id, selectedStudent);
+        html += `
+          <div class="homework-item">
+            <div class="homework-title">📌 ${hw.title}</div>
+            <div class="homework-date">📅 發布：${new Date(hw.date).toLocaleString()}</div>
+            <div>${hw.description}</div>
+            ${hw.imageUrl ? `<img src="${hw.imageUrl}" style="max-width:150px; margin:10px 0;">` : ''}
+            <div style="margin-top: 10px;">
+              ${check.submitted ? 
+                `<div class="status-submitted">✅ 已繳交！上傳時間：${new Date(check.uploadDate).toLocaleString()}</div>
+                 <div class="submitted-file"><a href="${check.fileUrl}" target="_blank">📁 查看已上傳檔案</a></div>` :
+                `<div class="status-not">⏳ 尚未繳交</div>
+                 <input type="file" id="file_${hw.id}" accept=".mp3,.wav,.m4a,.jpg,.jpeg,.png">
+                 <button onclick="uploadFile('${hw.id}')">📤 上傳作業</button>
+                 <div id="status_${hw.id}" style="margin-top:5px;"></div>`
+              }
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+  }
+  
+  async function uploadFile(homeworkId) {
+    const fileInput = document.getElementById(`file_${homeworkId}`);
+    const file = fileInput.files[0];
+    if (!file) { alert('請選擇檔案'); return; }
+    
+    const isAudio = file.name.match(/\.(mp3|wav|m4a)$/i);
+    const isImage = file.name.match(/\.(jpg|jpeg|png)$/i);
+    if (!isAudio && !isImage) { alert('請上傳 MP3 或圖片檔案'); return; }
+    
+    const statusDiv = document.getElementById(`status_${homeworkId}`);
+    statusDiv.innerHTML = '⏳ 上傳中...';
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const base64 = e.target.result.split(',')[1];
+      const res = await api.uploadHomework(base64, file.name, homeworkId, selectedStudent);
+      if (res.success) {
+        statusDiv.innerHTML = '✅ 上傳成功！';
+        setTimeout(() => loadHomework(), 2000);
+      } else {
+        statusDiv.innerHTML = '❌ 上傳失敗：' + res.message;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+  
+  document.getElementById('studentSelect').onchange = function() {
+    selectedStudent = this.value;
+    if (selectedStudent) loadHomework();
+    else document.getElementById('homeworkList').innerHTML = '請先選擇姓名';
+  };
+  
+  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+  loadStudents();
+</script>
+</body>
+</html>

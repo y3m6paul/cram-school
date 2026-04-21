@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生作業系統</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 { color: #4CAF50; margin-bottom: 30px; }
+    button {
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px 0;
+      width: 100%;
+    }
+    .btn-admin { background: #2196F3; color: white; }
+    .btn-student { background: #4CAF50; color: white; }
+    .password-area { display: none; margin-top: 20px; }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .message { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>📚 學生作業系統</h1>
+  <button class="btn-admin" onclick="showLogin('admin')">👨‍🏫 管理員登入</button>
+  <button class="btn-student" onclick="showLogin('student')">👨‍🎓 學生登入</button>
+  <div id="passwordArea" class="password-area">
+    <input type="password" id="password" placeholder="請輸入密碼">
+    <button onclick="doLogin()">登入</button>
+  </div>
+  <div id="message" class="message"></div>
+</div>
+<script src="js/api.js"></script>
+<script>
+  let userType = '';
+  function showLogin(type) { userType = type; document.getElementById('passwordArea').style.display = 'block'; }
+  async function doLogin() {
+    const pwd = document.getElementById('password').value;
+    const res = await api.login(userType, pwd);
+    if (res.success) {
+      localStorage.setItem('userType', userType);
+      window.location.href = userType === 'admin' ? 'admin.html' : 'student.html';
+    } else {
+      document.getElementById('message').innerText = '密碼錯誤';
+    }
+  }
+</script>
+</body>
+</html>

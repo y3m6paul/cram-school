@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理員後台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { background: #2196F3; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: white; border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; }
+    textarea { min-height: 100px; resize: vertical; }
+    button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-danger { background: #f44336; }
+    .btn-back { background: #666; }
+    .preview-img { max-width: 200px; margin-top: 10px; border-radius: 5px; }
+    .homework-item { border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 15px; background: #f9f9f9; border-radius: 8px; }
+    .homework-title { font-weight: bold; font-size: 18px; }
+    .homework-date { color: #666; font-size: 12px; margin: 5px 0; }
+    .homework-img { max-width: 150px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h2>📝 作業發布後台</h2>
+    <button class="btn-back" onclick="logout()">登出</button>
+  </div>
+  
+  <div class="card">
+    <h3>➕ 發布新作業</h3>
+    <input type="text" id="title" placeholder="作業標題">
+    <textarea id="description" placeholder="作業說明（如何寫功課）"></textarea>
+    <input type="file" id="imageFile" accept="image/*" onchange="previewImage(this)">
+    <div id="imagePreview"></div>
+    <button onclick="publish()">發布作業</button>
+  </div>
+  
+  <div class="card">
+    <h3>📋 已發布作業</h3>
+    <div id="homeworkList">載入中...</div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let currentImageBase64 = '';
+  let currentImageName = '';
+  
+  async function loadHomework() {
+    const res = await api.getHomework();
+    if (res.success && res.homeworks.length) {
+      document.getElementById('homeworkList').innerHTML = res.homeworks.map(h => `
+        <div class="homework-item">
+          <div class="homework-title">📌 ${h.title}</div>
+          <div class="homework-date">📅 發布：${new Date(h.date).toLocaleString()}</div>
+          <div>${h.description}</div>
+          ${h.imageUrl ? `<img src="${h.imageUrl}" class="homework-img">` : ''}
+          <button class="btn-danger" onclick="deleteHw('${h.id}')">刪除</button>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('homeworkList').innerHTML = '暫無作業';
+    }
+  }
+  
+  function previewImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    currentImageName = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      currentImageBase64 = e.target.result.split(',')[1];
+      document.getElementById('imagePreview').innerHTML = `<img src="${e.target.result}" class="preview-img">`;
+    };
+    reader.readAsDataURL(file);
+  }
+  
+  async function publish() {
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    if (!title) { alert('請輸入標題'); return; }
+    
+    const res = await api.publishHomework({
+      title: title,
+      description: description,
+      imageBase64: currentImageBase64,
+      imageName: currentImageName
+    });
+    
+    if (res.success) {
+      alert('作業發布成功！');
+      document.getElementById('title').value = '';
+      document.getElementById('description').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+      document.getElementById('imageFile').value = '';
+      currentImageBase64 = '';
+      loadHomework();
+    } else {
+      alert('發布失敗：' + res.message);
+    }
+  }
+  
+  async function deleteHw(id) {
+    if (!confirm('確定刪除此作業？')) return;
+    const res = await api.deleteHomework(id);
+    if (res.success) { alert('刪除成功'); loadHomework(); }
+    else alert('刪除失敗');
+  }
+  
+  function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+  loadHomework();
+</script>
+</body>
+</html>
